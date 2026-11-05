@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>Лисянский</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Press+Start+2P&display=swap" rel="stylesheet">
+<script>try{document.documentElement.dataset.theme=localStorage.getItem("theme")||"dark"}catch(e){}</script>
+<link rel="stylesheet" href="index.css">
+</head>
+<body class="booting">
+
+<!-- ИНТРО: только видео на фоне #32713A -->
+<div id="intro">
+  <video id="introVideo" muted playsinline preload="auto">
+    <source src="Resources/intro.mp4" type="video/mp4">
+  </video>
+  <div id="introFallback" hidden>
+    <svg viewBox="0 0 120 120" width="150" height="150"><polygon id="ifHex" points="60,6 108,33 108,87 60,114 12,87 12,33" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="miter"/></svg>
+    <b id="ifName">Лисянский</b>
+  </div>
+  <button id="skip" type="button" data-ru="Пропустить" data-en="Skip">Пропустить</button>
+</div>
+
+<!-- Декор фона -->
+<div id="decor" aria-hidden="true"></div>
+<div id="logos" aria-hidden="true"></div>
+<div class="glow" aria-hidden="true"></div>
+<div class="scan" aria-hidden="true"></div>
+
+<!-- Постоянный интерфейс -->
+<div class="ui">
+  <button id="back" class="pill-btn" type="button" hidden>
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    <span data-ru="К переписке" data-en="Back to chat">К переписке</span>
+  </button>
+  <div id="langs" class="langs" role="group" aria-label="Language">
+    <button type="button" data-l="ru">RU</button><button type="button" data-l="en">EN</button><i></i>
+  </div>
+  <nav id="dots" class="dots" aria-label="Blocks" hidden></nav>
+</div>
+
+<div id="ticker" aria-hidden="true"><div class="tk"></div></div>
+<div id="vlabel" aria-hidden="true"></div>
+<div id="px" aria-hidden="true"></div>
+
+<main id="app">
+
+  <!-- 0. ПЕРЕПИСКА -->
+  <section class="sec" id="s0" data-name-ru="Переписка" data-name-en="Chat">
+    <div class="tg">
+      <header class="tg-head">
+        <div class="ava" id="tgAva"></div>
+        <div class="tg-who">
+          <div class="tg-name" data-ru="Лисёнок" data-en="Little Fox">Лисёнок</div>
+          <div class="tg-status" id="tgStatus"><span id="tgStatusTxt" data-ru="в сети" data-en="online">в сети</span><span class="tdots"><i></i><i></i><i></i></span></div>
+        </div>
+        <button id="tgMenuBtn" class="tg-dots" type="button" aria-haspopup="true" aria-expanded="false" aria-label="Menu"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg></button>
+        <div id="tgMenu" class="tg-menu" hidden><button id="themeBtn" type="button"><svg id="thIc" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"></svg><span id="thTxt" data-ru="Светлая тема" data-en="Light theme">Светлая тема</span></button></div>
+      </header>
+      <div class="tg-stream scroll" id="stream"></div>
+      <footer class="tg-input">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.5l-8.5 8.5a5.5 5.5 0 01-7.8-7.8l9-9a3.7 3.7 0 015.2 5.2l-9 9a1.8 1.8 0 01-2.6-2.6l8-8"/></svg>
+        <span data-ru="Выбери вариант выше…" data-en="Pick an option above…">Выбери вариант выше…</span>
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M3 20.5l18-8.5L3 3.5l.02 6.6L15 12 3.02 13.9z"/></svg>
+      </footer>
+    </div>
+  </section>
+
+  <!-- 1. ССЫЛКИ -->
+  <section class="sec" id="s1" data-name-ru="Ссылки" data-name-en="Links">
+    <div class="sec-in">
+      <h2 class="sec-title"><i class="hx-ic"></i><span data-ru="Мои ссылки" data-en="My links">Мои ссылки</span></h2>
+      <p class="sec-sub" data-ru="Нажми на соту, чтобы открыть" data-en="Tap a cell to open it">Нажми на соту, чтобы открыть</p>
+      <div class="hive" id="hiveStage">
+        <div class="hd"><div class="hd-in" id="hdIn">
+          <h3 id="hdName"></h3>
+          <p id="hdDesc"></p>
+          <div class="hd-btns">
+            <a id="hdGo" class="btn main" target="_blank" rel="noopener" data-ru="Перейти" data-en="Go">Перейти</a>
+            <button id="hdBack" class="btn" type="button" data-ru="Назад" data-en="Back">Назад</button>
+          </div>
+        </div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. БИОГРАФИЯ -->
+  <section class="sec" id="s2" data-name-ru="Обо мне" data-name-en="About me">
+    <div class="sec-in bio">
+      <h2 class="sec-title"><i class="hx-ic"></i><span data-ru="Обо мне" data-en="About me">Обо мне</span></h2>
+      <div class="bio-card">
+        <p id="bioText"></p>
+        <p class="bio-lang" id="bioLang"></p>
+      </div>
+      <div class="graph" id="grStage">
+        <svg id="grSvg" aria-hidden="true"></svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. ПРОЕКТЫ -->
+  <section class="sec" id="s3" data-name-ru="Проекты" data-name-en="Projects">
+    <div class="sec-in scroll">
+      <h2 class="sec-title"><i class="hx-ic"></i><span data-ru="Проекты" data-en="Projects">Проекты</span></h2>
+      <p class="sec-sub" data-ru="Над чем я работаю" data-en="What I'm building">Над чем я работаю</p>
+      <div class="proj-grid" id="projGrid"></div>
+    </div>
+  </section>
+
+  <!-- 4. ГАЛЕРЕЯ -->
+  <section class="sec" id="s4" data-name-ru="Галерея" data-name-en="Gallery">
+    <div class="sec-in gal">
+      <h2 class="sec-title"><i class="hx-ic"></i><span data-ru="Галерея" data-en="Gallery">Галерея</span></h2>
+      <div class="gal-stage" id="galStage"></div>
+    </div>
+  </section>
+
+  <!-- 5. МАГАЗИН -->
+  <section class="sec" id="s5" data-name-ru="Магазин" data-name-en="Shop">
+    <div class="sec-in scroll">
+      <h2 class="sec-title"><i class="hx-ic"></i><span data-ru="Магазин услуг" data-en="Services shop">Магазин услуг</span></h2>
+      <p class="shop-note" data-ru="Цены указаны «от». Окончательная стоимость может отличаться в зависимости от сложности заказа." data-en="Prices start from the amounts shown. The final price may differ depending on the complexity of the order.">Цены указаны «от». Окончательная стоимость может отличаться в зависимости от сложности заказа.</p>
+      <a id="contactTop" class="btn main wide" target="_blank" rel="noopener" data-ru="Связь" data-en="Contact me">Связь</a>
+      <div class="shop" id="shop"></div>
+    </div>
+  </section>
+
+</main>
+
+<div id="lightbox" hidden><img alt=""><button type="button" aria-label="Close">×</button></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="index.js"></script>
+</body>
+</html>
