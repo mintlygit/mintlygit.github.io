@@ -1,1 +1,0 @@
-# mintlygit.github.io
