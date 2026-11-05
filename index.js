@@ -763,12 +763,22 @@ function preloadAll() {
 /* ============================ ИНТРО И ЗАПУСК ============================ */
 function runIntro() {
   const READY = preloadAll(); let going = false;
-  const v = $('#introVideo'), skip = $('#skip'); let done = false, started = false, fb = null;
+  const v = $('#introVideo'), skip = $('#skip'); let done = false, started = false, fb = null, lp = null;
   const end = () => {
-    if (done) return; done = true; if (fb) fb.kill(); try { v.pause(); } catch (e) {}
+    if (done) return; done = true; if (fb) fb.kill(); if (lp) lp.kill(); try { v.pause(); } catch (e) {}
     gsap.to('#intro', { autoAlpha: 0, duration: .7, ease: 'power2.inOut', onComplete: () => { $('#intro').remove(); startSite(); } });
   };
-  const go = () => { if (going) return; going = true; READY.then(end); };
+  /* пока файлы ещё грузятся — показываем зацикленную анимацию, она не остановится до конца загрузки */
+  const loopAnim = () => {
+    if (lp) return; if (fb) fb.kill(); try { v.pause(); } catch (e) {}
+    v.hidden = true; $('#introFallback').hidden = false;
+    gsap.set('#ifName', { opacity: 1, y: 0 });
+    lp = gsap.timeline({ repeat: -1, repeatDelay: .15, onRepeat: () => scramble($('#ifName'), .7) });
+    lp.fromTo('#ifHex', { strokeDasharray: 330, strokeDashoffset: 330 }, { strokeDashoffset: 0, duration: 1.1, ease: 'steps(14)' })
+      .to('#ifHex', { strokeDashoffset: -330, duration: 1.1, ease: 'steps(14)' }, '+=.45')
+      .to('#ifName', { opacity: .25, duration: .35, ease: 'steps(1)', repeat: 3, yoyo: true }, 0);
+  };
+  const go = () => { if (going) return; going = true; Promise.race([READY.then(() => 1), sleep(80).then(() => 0)]).then(ok => { if (ok) end(); else { loopAnim(); READY.then(end); } }); };
   skip.onclick = go; gsap.to(skip, { opacity: 1, delay: 1, duration: .8 });
   v.addEventListener('ended', go); v.addEventListener('playing', () => { started = true; });
   const fallback = () => {
