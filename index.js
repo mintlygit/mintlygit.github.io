@@ -605,7 +605,7 @@ async function probeGallery() {
     const next = () => {
       if (k >= exts.length) return res(null);
       const src = `${dir}${prefix}${String(n).padStart(2, '0')}.${exts[k++]}`, im = new Image();
-      im.onload = () => res({ src, w: im.naturalWidth, h: im.naturalHeight }); im.onerror = next; im.src = src;
+      im.onload = () => { KEEP.push(im); res({ src, w: im.naturalWidth, h: im.naturalHeight }); }; im.onerror = next; im.src = src;
     }; next();
   });
   const out = []; let i = 1;
@@ -623,7 +623,7 @@ async function enterGal() {
   if (GAL.loading) return;
   if (GAL.built && GAL.lastW === $('#galStage').clientWidth) { GAL.rows.forEach(r => r.tw.play()); return; }
   GAL.loading = true;
-  if (!GAL.data) GAL.data = await probeGallery();
+  if (!GAL.data) await (GAL.p || (GAL.p = probeGallery().then(d => (GAL.data = d))));
   buildGallery(); GAL.loading = false;
 }
 function leaveGal() { GAL.rows.forEach(r => r.tw && r.tw.pause()); }
@@ -731,19 +731,50 @@ function buildUI() {
   });
 }
 
+/* ============================ ПРЕДЗАГРУЗКА ============================ */
+/* Всё из Resources/ грузится за время интро, чтобы потом ничего не подгружалось на лету */
+const KEEP = [];
+function preImg(src) {
+  return new Promise(res => {
+    const im = new Image(); im.decoding = 'async';
+    im.onload = () => (im.decode ? im.decode().catch(() => {}) : Promise.resolve()).then(() => { KEEP.push(im); res(im); });
+    im.onerror = () => res(null); im.src = src;
+  });
+}
+async function preAny(base, exts) { for (const e of exts) { const im = await preImg(base + '.' + e); if (im) return im; } return null; }
+function preloadAll() {
+  const ld = h('div', 'ld', '<b>0%</b><i><u></u></i>'); $('#intro').append(ld);
+  const bar = $('u', ld), num = $('b', ld);
+  const EX = ['png', 'jpg', 'jpeg', 'webp'];
+  const jobs = [
+    ...CONFIG.links.map(l => () => preImg(l.img)),
+    () => preImg('Resources/me.png'), () => preImg('Resources/avatar.png'),
+    ...['python', 'telegram', 'html', 'js'].map(k => () => preImg(`Resources/logo-${k}.png`)),
+    ...CONFIG.projects.map(p => () => preAny(p.img.replace(/\.\w+$/, ''), EX)),
+    () => document.fonts && document.fonts.ready,
+    () => (GAL.p = GAL.p || probeGallery().then(d => (GAL.data = d)))
+  ];
+  let done = 0;
+  const tick = () => { const pc = Math.round(++done / jobs.length * 100); num.textContent = pc + '%'; bar.style.width = pc + '%'; };
+  const all = Promise.all(jobs.map(j => Promise.resolve().then(j).catch(() => {}).then(tick)));
+  return Promise.race([all, sleep(20000)]);
+}
+
 /* ============================ ИНТРО И ЗАПУСК ============================ */
 function runIntro() {
+  const READY = preloadAll(); let going = false;
   const v = $('#introVideo'), skip = $('#skip'); let done = false, started = false, fb = null;
   const end = () => {
     if (done) return; done = true; if (fb) fb.kill(); try { v.pause(); } catch (e) {}
     gsap.to('#intro', { autoAlpha: 0, duration: .7, ease: 'power2.inOut', onComplete: () => { $('#intro').remove(); startSite(); } });
   };
-  skip.onclick = end; gsap.to(skip, { opacity: 1, delay: 1, duration: .8 });
-  v.addEventListener('ended', end); v.addEventListener('playing', () => { started = true; });
+  const go = () => { if (going) return; going = true; READY.then(end); };
+  skip.onclick = go; gsap.to(skip, { opacity: 1, delay: 1, duration: .8 });
+  v.addEventListener('ended', go); v.addEventListener('playing', () => { started = true; });
   const fallback = () => {
     if (started || done || fb) return;
     v.hidden = true; $('#introFallback').hidden = false;
-    fb = gsap.timeline({ onComplete: end });
+    fb = gsap.timeline({ onComplete: go });
     fb.fromTo('#ifHex', { strokeDasharray: 330, strokeDashoffset: 330 }, { strokeDashoffset: 0, duration: 1.4, ease: 'power2.inOut' })
       .fromTo('#ifName', { y: 14 }, { opacity: 1, y: 0, duration: .6 }, '-=.4').to({}, { duration: .8 });
   };
